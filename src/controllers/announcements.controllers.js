@@ -1,7 +1,7 @@
 import prisma from "../../prisma/client.js";
+import createHttpError from "http-errors";
 
 export const getAllAnnouncements = async (req, res) => {
-  // 1. Конвертируем страницу через Number(), как требует подсказка
   const page = Number(req.query.page) || 1;
   const search = req.query.search || "";
   const currentSort = req.query.sort || "newest";
@@ -22,10 +22,21 @@ export const getAllAnnouncements = async (req, res) => {
     take: perPage,
     orderBy: { createdAt: prismaSort },
     where,
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          name: true,
+        },
+      },
+    },
   };
+
   const [announcements, total] = await Promise.all([
     prisma.announcement.findMany(queryOptions),
-    prisma.announcement.count({ where }), // Тот же самый объект where
+    prisma.announcement.count({ where }),
   ]);
 
   res.status(200).json({
@@ -41,6 +52,7 @@ export const getAllAnnouncements = async (req, res) => {
 
 export const getAnnouncementById = async (req, res) => {
   const { id } = req.params;
+
   const announcement = await prisma.announcement.findUniqueOrThrow({
     where: { id: Number(id) },
   });
@@ -49,10 +61,17 @@ export const getAnnouncementById = async (req, res) => {
 };
 
 export const createAnnouncement = async (req, res) => {
-  const { title, description, price, category, contactInfo } = req.body;
+  const { title, description, price, category, contactInfo, userId } = req.body;
 
   const announcement = await prisma.announcement.create({
-    data: { title, description, price, category, contactInfo },
+    data: {
+      title,
+      description,
+      price: Number(price),
+      category,
+      contactInfo,
+      userId: Number(userId),
+    },
   });
 
   res.status(201).json(announcement);
@@ -60,17 +79,55 @@ export const createAnnouncement = async (req, res) => {
 
 export const updateAnnouncement = async (req, res) => {
   const { id } = req.params;
+  const { title, description, price, category, contactInfo, userId } = req.body;
 
-  const announcement = await prisma.announcement.update({
+  const announcement = await prisma.announcement.findUnique({
     where: { id: Number(id) },
-    data: req.body,
   });
 
-  res.status(200).json(announcement);
+  if (!announcement) {
+    throw createHttpError(404, "Announcement not found");
+  }
+
+  if (announcement.userId !== Number(userId)) {
+    throw createHttpError(
+      403,
+      "You are not authorized to update this announcement",
+    );
+  }
+
+  const updatedAnnouncement = await prisma.announcement.update({
+    where: { id: Number(id) },
+    data: {
+      title,
+      description,
+      price: price !== undefined ? Number(price) : undefined,
+      category,
+      contactInfo,
+    },
+  });
+
+  res.status(200).json(updatedAnnouncement);
 };
 
 export const deleteAnnouncement = async (req, res) => {
   const { id } = req.params;
+  const { userId } = req.body;
+
+  const announcement = await prisma.announcement.findUnique({
+    where: { id: Number(id) },
+  });
+
+  if (!announcement) {
+    throw createHttpError(404, "Announcement not found");
+  }
+
+  if (announcement.userId !== Number(userId)) {
+    throw createHttpError(
+      403,
+      "You are not authorized to delete this announcement",
+    );
+  }
 
   await prisma.announcement.delete({
     where: { id: Number(id) },

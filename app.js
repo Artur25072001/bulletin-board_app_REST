@@ -2,10 +2,15 @@ import express from "express";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import { errors as celebrateErrors } from "celebrate";
+import authRouter from "./src/routes/auth.js";
 
 import announcementsRouter from "./src/routes/announcements.routes.js";
 
 const app = express();
+
+import cookieParser from "cookie-parser";
+
+app.use(cookieParser());
 
 // Swagger configuration
 const swaggerOptions = {
@@ -34,6 +39,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Our routes would go here, for example:
 app.use("/api/announcements", announcementsRouter);
+app.use("/api/auth", authRouter);
 
 app.use(celebrateErrors());
 
@@ -45,6 +51,10 @@ app.use((req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err);
+
+  if (err.status && err.status >= 400 && err.status < 500) {
+    return res.status(err.status).json({ error: err.message });
+  }
 
   // JSON parsing errors (invalid JSON format)
   if (err.type === "entity.parse.failed" && err.status === 400) {

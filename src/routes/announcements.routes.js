@@ -1,4 +1,5 @@
 import express from "express";
+import authenticate from "../middleware/authenticate.js";
 import * as announcementController from "../controllers/announcements.controllers.js";
 import * as announcementValidator from "../validators/announcements.validators.js";
 
@@ -30,7 +31,11 @@ const router = express.Router();
  *       200:
  *         description: List of announcements retrieved successfully
  */
-router.get("/", announcementController.getAllAnnouncements);
+router.get(
+  "/",
+  announcementController.getAllAnnouncements,
+  announcementValidator.getAnnouncementValidator,
+);
 
 /**
  * @swagger
@@ -99,6 +104,7 @@ router.get(
  */
 router.post(
   "/",
+  authenticate,
   announcementValidator.createAnnouncementValidator,
   announcementController.createAnnouncement,
 );
@@ -146,6 +152,7 @@ router.post(
  */
 router.patch(
   "/:id",
+  authenticate,
   announcementValidator.updateAnnouncementValidator,
   announcementController.updateAnnouncement,
 );
@@ -171,6 +178,7 @@ router.patch(
  */
 router.delete(
   "/:id",
+  authenticate,
   announcementValidator.deleteAnnouncementValidator,
   announcementController.deleteAnnouncement,
 );
