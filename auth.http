@@ -26,6 +26,10 @@ Content-Type: application/json
   "refreshToken": "d3cad76b3688916be98742aa84455f8406e4c024bf4bd2ac3ff7706201f29c68a51644d3be0194d0"
 }
 
+### Отримання профілю (потрібен Bearer access токен)
+GET http://localhost:3000/api/auth/me
+Authorization: Bearer <access_token>
+
 ### Вихід
 POST http://localhost:3000/api/auth/logout
 Content-Type: application/json

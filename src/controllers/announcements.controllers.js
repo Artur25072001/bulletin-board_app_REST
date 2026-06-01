@@ -61,7 +61,8 @@ export const getAnnouncementById = async (req, res) => {
 };
 
 export const createAnnouncement = async (req, res) => {
-  const { title, description, price, category, contactInfo, userId } = req.body;
+  const { title, description, price, category, contactInfo } = req.body;
+  const userId = Number(req.user.sub);
 
   const announcement = await prisma.announcement.create({
     data: {
@@ -70,7 +71,7 @@ export const createAnnouncement = async (req, res) => {
       price: Number(price),
       category,
       contactInfo,
-      userId: Number(userId),
+      userId,
     },
   });
 
@@ -79,7 +80,8 @@ export const createAnnouncement = async (req, res) => {
 
 export const updateAnnouncement = async (req, res) => {
   const { id } = req.params;
-  const { title, description, price, category, contactInfo, userId } = req.body;
+  const { title, description, price, category, contactInfo } = req.body;
+  const userId = Number(req.user.sub);
 
   const announcement = await prisma.announcement.findUnique({
     where: { id: Number(id) },
@@ -89,7 +91,7 @@ export const updateAnnouncement = async (req, res) => {
     throw createHttpError(404, "Announcement not found");
   }
 
-  if (announcement.userId !== Number(userId)) {
+  if (announcement.userId !== userId) {
     throw createHttpError(
       403,
       "You are not authorized to update this announcement",
@@ -112,7 +114,7 @@ export const updateAnnouncement = async (req, res) => {
 
 export const deleteAnnouncement = async (req, res) => {
   const { id } = req.params;
-  const { userId } = req.body;
+  const userId = Number(req.user.sub);
 
   const announcement = await prisma.announcement.findUnique({
     where: { id: Number(id) },
@@ -122,7 +124,7 @@ export const deleteAnnouncement = async (req, res) => {
     throw createHttpError(404, "Announcement not found");
   }
 
-  if (announcement.userId !== Number(userId)) {
+  if (announcement.userId !== userId) {
     throw createHttpError(
       403,
       "You are not authorized to delete this announcement",

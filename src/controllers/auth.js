@@ -103,6 +103,27 @@ export const refresh = async (req, res) => {
   });
 };
 
+export const getProfile = async (req, res) => {
+  const userId = Number(req.user.sub);
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      name: true,
+      createdAt: true,
+    },
+  });
+
+  if (!user) {
+    throw createHttpError(404, "User not found");
+  }
+
+  res.status(200).json(user);
+};
+
 export const logout = async (req, res) => {
   const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
 

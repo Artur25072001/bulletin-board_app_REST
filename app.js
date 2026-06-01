@@ -3,6 +3,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import { errors as celebrateErrors } from "celebrate";
 import authRouter from "./src/routes/auth.js";
+import "dotenv/config";
 
 import announcementsRouter from "./src/routes/announcements.routes.js";
 
@@ -17,15 +18,25 @@ const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "REST API",
+      title: "Bulletin Board REST API",
       version: "1.0.0",
-      description: "REST API documentation",
+      description: "REST API documentation for the Bulletin Board application",
     },
     servers: [
       {
         url: "http://localhost:3000",
       },
     ],
+    components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+          description: "Enter your JWT access token",
+        },
+      },
+    },
   },
   apis: ["./src/routes/*.js"],
 };
