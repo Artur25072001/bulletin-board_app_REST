@@ -2,6 +2,7 @@ import express from "express";
 import authenticate from "../middleware/authenticate.js";
 import * as announcementController from "../controllers/announcements.controllers.js";
 import * as announcementValidator from "../validators/announcements.validators.js";
+import { upload } from "../middleware/upload.middleware.js";
 
 const router = express.Router();
 
@@ -186,7 +187,7 @@ router.get(
  * /api/announcements:
  *   post:
  *     summary: Create new announcement
- *     description: Create a new announcement (requires authentication)
+ *     description: Create a new announcement (requires authentication). Supports both application/json and multipart/form-data (for image upload).
  *     tags: [Announcements]
  *     security:
  *       - BearerAuth: []
@@ -225,6 +226,42 @@ router.get(
  *                 minLength: 5
  *                 maxLength: 200
  *                 example: "0991234567"
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - description
+ *               - price
+ *               - category
+ *               - contactInfo
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 100
+ *                 example: Продам ноутбук ASUS
+ *               description:
+ *                 type: string
+ *                 minLength: 10
+ *                 maxLength: 200
+ *                 example: Відмінний стан, 16GB RAM
+ *               price:
+ *                 type: number
+ *                 example: 18000
+ *               category:
+ *                 type: string
+ *                 enum: [sale, service, job, other]
+ *                 example: sale
+ *               contactInfo:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 200
+ *                 example: "0991234567"
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Optional image file (jpeg, png, webp). Max 5MB. Uploaded to Cloudinary.
  *     responses:
  *       201:
  *         description: Announcement created successfully
@@ -251,6 +288,9 @@ router.get(
  *                 contactInfo:
  *                   type: string
  *                   example: "0991234567"
+ *                 imageUrl:
+ *                   type: string
+ *                   example: https://res.cloudinary.com/demo/image/upload/sample.jpg
  *                 createdAt:
  *                   type: string
  *                   format: date-time
@@ -289,6 +329,7 @@ router.get(
 router.post(
   "/",
   authenticate,
+  upload.single("image"),
   announcementValidator.createAnnouncementValidator,
   announcementController.createAnnouncement,
 );
@@ -298,7 +339,7 @@ router.post(
  * /api/announcements/{id}:
  *   patch:
  *     summary: Update announcement
- *     description: Update an existing announcement (requires authentication, only owner can update)
+ *     description: Update an existing announcement (requires authentication, only owner can update). Supports both application/json and multipart/form-data (for image upload).
  *     tags: [Announcements]
  *     security:
  *       - BearerAuth: []
@@ -339,6 +380,37 @@ router.post(
  *                 minLength: 5
  *                 maxLength: 200
  *                 example: "0990000000"
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             minProperties: 1
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 100
+ *                 example: Новий заголовок
+ *               description:
+ *                 type: string
+ *                 minLength: 10
+ *                 maxLength: 200
+ *                 example: Оновлений опис з додатковими деталями
+ *               price:
+ *                 type: number
+ *                 example: 15000
+ *               category:
+ *                 type: string
+ *                 enum: [sale, service, job, other]
+ *                 example: service
+ *               contactInfo:
+ *                 type: string
+ *                 minLength: 5
+ *                 maxLength: 200
+ *                 example: "0990000000"
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Optional new image file (jpeg, png, webp). Replaces the existing one.
  *     responses:
  *       200:
  *         description: Announcement updated successfully
@@ -365,6 +437,9 @@ router.post(
  *                 contactInfo:
  *                   type: string
  *                   example: "0990000000"
+ *                 imageUrl:
+ *                   type: string
+ *                   example: https://res.cloudinary.com/demo/image/upload/sample.jpg
  *                 createdAt:
  *                   type: string
  *                   format: date-time
@@ -423,6 +498,7 @@ router.post(
 router.patch(
   "/:id",
   authenticate,
+  upload.single("image"),
   announcementValidator.updateAnnouncementValidator,
   announcementController.updateAnnouncement,
 );

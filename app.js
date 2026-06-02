@@ -3,15 +3,36 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import { errors as celebrateErrors } from "celebrate";
 import authRouter from "./src/routes/auth.js";
+import cors from "cors";
 import "dotenv/config";
-
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import announcementsRouter from "./src/routes/announcements.routes.js";
+import { limiter, strictLimiter } from "./src/services/limiter.js";
+import logger from "./src/services/logger.js";
+import pinoHttp from "pino-http";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-
-import cookieParser from "cookie-parser";
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(",") || "http://localhost:3000",
+    credentials: true,
+  }),
+);
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  }),
+);
 
 app.use(cookieParser());
+app.use(limiter);
+app.use(pinoHttp({ logger }));
 
 // Swagger configuration
 const swaggerOptions = {
@@ -38,32 +59,31 @@ const swaggerOptions = {
       },
     },
   },
-  apis: ["./src/routes/*.js"],
+  apis: [path.join(__dirname, "src/routes/*.js")],
 };
-
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
-console.log("Paths found by Swagger:", Object.keys(swaggerSpec.paths));
-
 app.use(express.json());
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Our routes would go here, for example:
 app.use("/api/announcements", announcementsRouter);
-app.use("/api/auth", authRouter);
+app.use("/api/auth", strictLimiter, authRouter);
 
 app.use(celebrateErrors());
 
 // 404 Not Found handler - must be after all routes
 app.use((req, res) => {
+  logger.error(`Route not found: ${req.originalUrl}`);
   res.status(404).json({ error: "Not found" });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err);
+  logger.error(err);
 
   if (err.status && err.status >= 400 && err.status < 500) {
+    logger.error(`Client error: ${err.message}`);
     return res.status(err.status).json({ error: err.message });
   }
 
@@ -84,16 +104,26 @@ app.use((err, req, res, next) => {
   }
 
   if (err.code === "P2025") {
+    logger.error(`Resource not found: ${err.meta?.cause || "Unknown cause"}`);
     return res.status(404).json({ error: "Resource not found" });
   }
 
   if (err.code === "P2002") {
+    logger.error(
+      `Unique constraint violation: ${err.meta?.cause || "Unknown cause"}`,
+    );
     return res.status(409).json({ error: "Unique constraint violation" });
   }
 
   if (err.code === "P2003") {
+    logger.error(
+      `Foreign key constraint failed: ${err.meta?.cause || "Unknown cause"}`,
+    );
     return res.status(400).json({ error: "Foreign key constraint failed" });
   }
+  logger.error(`Unhandled error: ${err.message || "No message"}`, {
+    stack: err.stack,
+  });
 
   res.status(500).json({ error: "Internal server error" });
 });
@@ -101,6 +131,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-  console.log(`API docs: http://localhost:${PORT}/api-docs`);
+  logger.info(`Server is running on http://localhost:${PORT}`);
+  logger.info(`API docs: http://localhost:${PORT}/api-docs`);
 });

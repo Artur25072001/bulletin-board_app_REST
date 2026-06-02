@@ -1,5 +1,12 @@
 import prisma from "../../prisma/client.js";
 import createHttpError from "http-errors";
+import logger from "../services/logger.js";
+import { unlink } from "fs/promises";
+import {
+  upload,
+  cloudinary,
+  uploadImage,
+} from "../middleware/upload.middleware.js";
 
 export const getAllAnnouncements = async (req, res) => {
   const page = Number(req.query.page) || 1;
@@ -33,6 +40,9 @@ export const getAllAnnouncements = async (req, res) => {
       },
     },
   };
+  logger.info(
+    `Retrieved announcement with options: ${JSON.stringify(queryOptions)}`,
+  );
 
   const [announcements, total] = await Promise.all([
     prisma.announcement.findMany(queryOptions),
@@ -56,6 +66,9 @@ export const getAnnouncementById = async (req, res) => {
   const announcement = await prisma.announcement.findUniqueOrThrow({
     where: { id: Number(id) },
   });
+  logger.info(
+    `Retrieved announcement with id ${id}: ${JSON.stringify(announcement)}`,
+  );
 
   res.status(200).json(announcement);
 };
@@ -63,6 +76,7 @@ export const getAnnouncementById = async (req, res) => {
 export const createAnnouncement = async (req, res) => {
   const { title, description, price, category, contactInfo } = req.body;
   const userId = Number(req.user.sub);
+  const imageUrl = req.file ? await uploadImage(req.file) : undefined;
 
   const announcement = await prisma.announcement.create({
     data: {
@@ -72,8 +86,14 @@ export const createAnnouncement = async (req, res) => {
       category,
       contactInfo,
       userId,
+      ...(imageUrl !== undefined && { imageUrl }),
     },
   });
+  logger.info(
+    `Created announcement with id ${announcement.id} for user ${userId}: ${JSON.stringify(
+      announcement,
+    )}`,
+  );
 
   res.status(201).json(announcement);
 };
@@ -88,15 +108,22 @@ export const updateAnnouncement = async (req, res) => {
   });
 
   if (!announcement) {
+    logger.error(
+      `Attempted to update non-existent announcement with id ${id} by user ${userId}`,
+    );
     throw createHttpError(404, "Announcement not found");
   }
 
   if (announcement.userId !== userId) {
+    logger.error(
+      `Unauthorized update attempt for announcement with id ${id} by user ${userId}`,
+    );
     throw createHttpError(
       403,
       "You are not authorized to update this announcement",
     );
   }
+  const imageUrl = req.file ? await uploadImage(req.file) : undefined;
 
   const updatedAnnouncement = await prisma.announcement.update({
     where: { id: Number(id) },
@@ -106,9 +133,14 @@ export const updateAnnouncement = async (req, res) => {
       price: price !== undefined ? Number(price) : undefined,
       category,
       contactInfo,
+      ...(imageUrl !== undefined && { imageUrl }),
     },
   });
-
+  logger.info(
+    `Updated announcement with id ${id} for user ${userId}: ${JSON.stringify(
+      updatedAnnouncement,
+    )}`,
+  );
   res.status(200).json(updatedAnnouncement);
 };
 
@@ -121,15 +153,27 @@ export const deleteAnnouncement = async (req, res) => {
   });
 
   if (!announcement) {
+    logger.error(
+      `Attempted to delete non-existent announcement with id ${id} by user ${userId}`,
+    );
     throw createHttpError(404, "Announcement not found");
   }
 
   if (announcement.userId !== userId) {
+    logger.error(
+      `Unauthorized delete attempt for announcement with id ${id} by user ${userId}`,
+    );
     throw createHttpError(
       403,
       "You are not authorized to delete this announcement",
     );
   }
+
+  logger.info(
+    `Deleted announcement with id ${id} for user ${userId}: ${JSON.stringify(
+      announcement,
+    )}`,
+  );
 
   await prisma.announcement.delete({
     where: { id: Number(id) },

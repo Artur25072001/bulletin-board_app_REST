@@ -1,0 +1,205 @@
+### ============================================================
+### File: requests.http
+### Purpose: демонстрація роботи rate limiting (>10 запитів до
+###          /api/auth/login) + запит із завантаженням фото
+###          до /api/announcements (multipart/form-data).
+###
+### Щоб переглянути документацію Swagger UI, перейдіть на
+###   http://localhost:3000/api-docs
+### ============================================================
+
+@host             = http://localhost:3000
+@access_token     = your_access_token_here
+@announcement_id  = 1
+
+### ============================================================
+### 1) RATE LIMITING DEMO — /api/auth/login
+### ============================================================
+### strictLimiter у src/services/limiter.js обмежує /api/auth
+### до 10 запитів за 15 хвилин. Щоб побачити відповідь 429,
+### швидко відправте 11+ запитів з цього файлу (наприклад,
+### натиснувши "Send Request" по черзі або через REST Client
+### "Run All Requests").
+###
+### Перші 10 запитів повернуть 401 (Invalid credentials),
+### а 11+ запит поверне 429 (Too many requests).
+
+### Login attempt #1
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass1"
+}
+
+### Login attempt #2
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass2"
+}
+
+### Login attempt #3
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass3"
+}
+
+### Login attempt #4
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass4"
+}
+
+### Login attempt #5
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass5"
+}
+
+### Login attempt #6
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass6"
+}
+
+### Login attempt #7
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass7"
+}
+
+### Login attempt #8
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass8"
+}
+
+### Login attempt #9
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass9"
+}
+
+### Login attempt #10
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass10"
+}
+
+### Login attempt #11 — має повернути 429 Too Many Requests
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass11"
+}
+
+### Login attempt #12 — теж 429
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "chef_olenas",
+  "password": "wrongpass12"
+}
+
+
+### ============================================================
+### 2) PHOTO UPLOAD — створення оголошення з фото
+###    (multipart/form-data) через /api/announcements
+### ============================================================
+### Перед виконанням:
+###  1) Зареєструйтесь/увійдіть через /api/auth/login, щоб
+###     отримати accessToken.
+###  2) Вставте токен у змінну @access_token на початку файлу.
+###  3) Переконайтесь, що файл ./uploads/sample.jpg існує
+###     (або змініть шлях у полі `image` на власний).
+###
+### VS Code REST Client підставить вміст файлу на місце
+### рядка "< ./uploads/sample.jpg" перед відправкою.
+
+# FIX: замінено <access_token> → {{access_token}}
+POST {{host}}/api/announcements
+Authorization: Bearer {{access_token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="title"
+
+Продам велосипед Trek
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="description"
+
+Відмінний стан, майже новий, алюмінієва рама, 21 швидкість
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="price"
+
+7500
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="category"
+
+sale
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="contactInfo"
+
++380991234567
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="sample.jpg"
+Content-Type: image/jpeg
+
+< ./uploads/sample.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+
+### ============================================================
+### 3) PATCH /api/announcements/{id} — оновлення з новим фото
+### ============================================================
+# FIX: замінено <access_token> → {{access_token}}
+#      замінено хардкод /1    → /{{announcement_id}}
+PATCH {{host}}/api/announcements/{{announcement_id}}
+Authorization: Bearer {{access_token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="title"
+
+Продам велосипед Trek (оновлено)
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="price"
+
+7000
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="sample.jpg"
+Content-Type: image/jpeg
+
+< ./uploads/sample.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--

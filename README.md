@@ -1,261 +1,321 @@
-# REST API Boilerplate
+# Bulletin Board REST API
 
-Навчальний шаблон для створення REST API на базі Node.js, Express та Prisma ORM.
+A production-style REST API for a classifieds / bulletin-board application, built with Node.js, Express 5, and Prisma ORM. It supports user registration and JWT-based authentication, full CRUD for announcements with image uploads, pagination, search, and sorting.
 
-## Опис
+## Description
 
-Цей boilerplate розроблений для навчальних цілей бакалаврату українського університету. Він надає готову структуру для розробки REST API з використанням сучасних технологій та найкращих практик.
+This project is a learning-oriented REST API boilerplate / starter for a bulletin-board application. It demonstrates a clean, layered architecture (Controllers → Routes → Validators) with proper error handling, security middleware, request validation, structured logging, rate limiting, and auto-generated OpenAPI / Swagger documentation.
 
-## Можливості
+## Features
 
-- ✅ Express.js 5 - сучасний фреймворк для створення веб-додатків
-- ✅ Prisma ORM - типобезпечний ORM для роботи з базою даних
-- ✅ SQLite база даних - проста у налаштуванні для навчання
-- ✅ Celebrate - валідація вхідних даних за допомогою Joi
-- ✅ Swagger/OpenAPI - автоматична генерація документації API
-- ✅ Структурована архітектура (Controllers, Routes, Validators)
-- ✅ Централізована обробка помилок
-- ✅ Підтримка ES Modules
-- ✅ Hot reload для розробки
+- ✅ **Express 5** — modern, fast HTTP server
+- ✅ **JWT authentication** — register, login, refresh token rotation, logout
+- ✅ **bcrypt password hashing** — secure password storage
+- ✅ **Announcements CRUD** — create, read, update, delete with owner-only authorization
+- ✅ **Image upload** — Multer + Cloudinary integration (jpeg, png, webp, max 5 MB)
+- ✅ **Search, sort, and pagination** — on the announcements list endpoint
+- ✅ **Prisma ORM + SQLite** — type-safe database access
+- ✅ **Celebrate / Joi** — declarative request validation
+- ✅ **Swagger / OpenAPI 3** — auto-generated interactive API docs at `/api-docs`
+- ✅ **Security** — Helmet, CORS, httpOnly cookies, rate limiting (global + strict on auth)
+- ✅ **Structured logging** — Pino + pino-http with pretty output
+- ✅ **Centralized error handling** — for Prisma errors (`P2025`, `P2002`, `P2003`), JSON parse errors, and Celebrate validation errors
+- ✅ **ES Modules** — modern `"type": "module"` setup
+- ✅ **Hot reload** — `node --watch` for development
 
-## Технологічний стек
+## Tech Stack
 
-| Технологія | Версія | Опис |
-|------------|--------|------|
-| Node.js | - | Середовище виконання JavaScript |
-| Express | 5.2.1 | Веб-фреймворк |
-| Prisma | 7.2.0 | ORM для баз даних |
-| Celebrate | 15.0.3 | Валідація запитів |
-| Swagger UI | 5.0.1 | Інтерфейс документації API |
-| Swagger JSDoc | 6.2.8 | Генерація OpenAPI специфікації |
-| Dotenv | 17.2.3 | Управління змінними середовища |
+| Technology         | Version | Purpose                                  |
+| ------------------ | ------- | ---------------------------------------- |
+| Node.js            | 18+     | JavaScript runtime                       |
+| Express            | ^5.2.1  | Web framework                            |
+| Prisma             | ^7.2.0  | ORM + migrations                         |
+| @prisma/client     | ^7.2.0  | Generated Prisma client                  |
+| Celebrate          | ^15.0.3 | Request validation (Joi)                 |
+| Swagger UI Express | ^5.0.1  | Interactive API docs UI                  |
+| Swagger JSDoc      | ^6.2.8  | OpenAPI spec generator from JSDoc        |
+| jsonwebtoken       | ^9.0.3  | JWT access & refresh tokens              |
+| bcrypt             | ^6.0.0  | Password hashing                         |
+| multer             | ^2.1.1  | `multipart/form-data` parsing            |
+| cloudinary         | ^2.10.0 | Cloud image storage                      |
+| helmet             | ^8.2.0  | Security HTTP headers                    |
+| cors               | ^2.8.6  | Cross-origin resource sharing            |
+| cookie-parser      | ^1.4.7  | Parse `Cookie` header into `req.cookies` |
+| express-rate-limit | ^8.5.2  | Rate limiting / brute-force protection   |
+| pino               | ^10.3.1 | Structured JSON logger                   |
+| pino-http          | ^11.0.0 | Per-request HTTP logging                 |
+| pino-pretty        | ^13.1.3 | Pretty-printed logs (dev)                |
+| http-errors        | ^2.0.1  | Typed HTTP error factory                 |
+| dotenv             | ^17.2.3 | Environment variable loader              |
+| nodemailer         | ^8.0.10 | Email sending                            |
+| node-cron          | ^4.2.1  | Scheduled tasks                          |
 
-## Вимоги
+## Requirements
 
-- Node.js (рекомендована версія 18.x або вище)
-- npm або yarn
+- **Node.js** 18.x or higher
+- **npm** (or yarn / pnpm)
+- A **Cloudinary** account (free tier is fine) for image uploads
+- A **Gmail** account with an [App Password](https://support.google.com/accounts/answer/185833) if you plan to use the email features
 
-## Встановлення
+## Installation
 
-1. **Клонуйте репозиторій або завантажте архів проекту**
+1. **Clone the repository:**
 
-2. **Встановіть залежності:**
+   ```bash
+   git clone https://github.com/Artur25072001/bulletin-board_app_REST.git
+   cd bulletin-board_app_REST
+   ```
 
-```bash
-npm install
-```
+2. **Install dependencies:**
 
-1. **Створіть файл конфігурації:**
+   ```bash
+   npm install
+   ```
 
-```bash
-cp .env.example .env
-```
+3. **Create the environment file:**
 
-1. **Налаштуйте базу даних (докладніше в розділі "Робота з базою даних")**
+   ```bash
+   cp .env.example .env
+   ```
 
-2. **Запустіть проект:**
+   Then fill in the values (see [Configuration](#configuration) below).
 
-```bash
-npm run dev
-```
+4. **Run database migrations and generate the Prisma client:**
 
-## Налаштування
+   ```bash
+   npm run prisma:migrate
+   npm run prisma:generate
+   ```
 
-Файл `.env` містить змінні середовища для конфігурації проекту:
+5. **Start the server in development mode (auto-reload):**
+
+   ```bash
+   npm run dev
+   ```
+
+   The server will be available at `http://localhost:3000` and the API docs at `http://localhost:3000/api-docs`.
+
+## Configuration
+
+All configuration is done through environment variables in `.env`:
 
 ```env
-# URL бази даних для Prisma з SQLite адаптером
+# --- Database ---
+# Prisma SQLite connection string
 DATABASE_URL="file:./dev.db"
+
+# --- JWT ---
+# A secret of at least 256 bits used to sign JWT access & refresh tokens
+JWT_SECRET=your-secret-key-at-least-256-bits-long
+
+# --- CORS ---
+# Comma-separated list of allowed origins
+ALLOWED_ORIGINS=http://localhost:5173,https://my-app.example.com
+
+# --- Cloudinary (image uploads) ---
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=123456789012345
+CLOUDINARY_API_SECRET=your_api_secret
+
+# --- Email (optional, for password reset / notifications) ---
+EMAIL_USER=example@gmail.com
+EMAIL_PASS=your_gmail_app_password
+
+# --- Server (optional) ---
+# PORT=3000
+# NODE_ENV=development
 ```
 
-**Примітка:** Ви можете додати інші змінні середовища, наприклад:
+> ⚠️ Never commit a real `.env` file. The provided `.env.example` is a safe template.
 
-- `PORT` - порт сервера (за замовчуванням 3000)
-- `NODE_ENV` - середовище виконання (development, production)
+## Working with the Database
 
-## Робота з базою даних
+The project uses **Prisma ORM** with **SQLite** for zero-setup local development. The schema lives in `prisma/schema.prisma` and defines three models:
 
-Проект використовує Prisma ORM з базою даних SQLite.
+| Model          | Purpose                                                                   |
+| -------------- | ------------------------------------------------------------------------- |
+| `User`         | Application users. Owns announcements and refresh tokens.                 |
+| `Announcement` | A classifieds entry: title, description, price, category, contact, image. |
+| `RefreshToken` | Persistent refresh-token records (supports rotation and revocation).      |
 
-### Створення міграції
+### Create / apply a migration
 
-Після зміни файлу `prisma/schema.prisma`, створіть міграцію:
+After editing `prisma/schema.prisma`:
 
 ```bash
 npm run prisma:migrate
 ```
 
-Ця команда:
+This reads the schema, creates a new migration, and applies it to the database.
 
-- Зчитує зміни у `schema.prisma`
-- Створює нову міграцію
-- Застосовує зміни до бази даних
+### Regenerate the Prisma Client
 
-### Генерація Prisma Client
-
-Після створення або зміни міграцій, згенеруйте Prisma Client:
+After schema or migration changes:
 
 ```bash
 npm run prisma:generate
 ```
 
-### Структура бази даних
-
-Схема бази даних визначається у файлі `prisma/schema.prisma`. Додайте моделі відповідно до вимог вашого проекту.
-
-### Використання Prisma Client
-
-Prisma Client експортується з `prisma/client.js`. Приклад використання:
+### Using the Prisma Client
 
 ```javascript
-import { PrismaClient } from '../prisma/client.js'
+import prisma from "../prisma/client.js";
 
-const prisma = new PrismaClient()
-
-// Приклад запиту
-const tags = await prisma.tag.findMany()
+const announcements = await prisma.announcement.findMany({
+  take: 10,
+  orderBy: { createdAt: "desc" },
+});
 ```
 
-## Доступні скрипти
+## Available Scripts
 
-| Команда | Опис |
-|---------|------|
-| `npm start` | Запуск серверу у виробничому режимі |
-| `npm run dev` | Запуск серверу з автоматичним перезапуском при змінах |
-| `npm run prisma:migrate` | Створення та застосування міграцій бази даних |
-| `npm run prisma:generate` | Генерація Prisma Client |
+| Command                   | Description                                          |
+| ------------------------- | ---------------------------------------------------- |
+| `npm start`               | Run the server in production mode (`node app.js`)    |
+| `npm run dev`             | Run with `node --watch` (auto-reload on file change) |
+| `npm run prisma:migrate`  | Create and apply a Prisma migration                  |
+| `npm run prisma:generate` | Generate the Prisma Client                           |
 
-## Структура проекту
+## Project Structure
 
 ```
-hw3/
-├── prisma/                    # Конфігурація та файли Prisma
-│   ├── schema.prisma         # Схема бази даних
-│   └── client.js             # Експорт Prisma Client
-├── dev.db                    # SQLite база даних (створюється після міграції)
-├── src/                      # Основний код проекту
-│   ├── controllers/          # Контролери обробки запитів
-│   ├── routes/              # Визначення маршрутів API
-│   └── validators/          # Схеми валідації запитів (Joi)
-├── app.js                    # Головний файл додатку
-├── .env.example             # Шаблон змінних середовища
-├── .gitignore               # Файли, що ігноруються Git
-├── package.json             # Залежності та скрипти
-├── tsconfig.json            # Конфігурація TypeScript (для типізації)
-└── README.md                # Цей файл
+bulletin-board_app_REST/
+├── prisma/                            # Prisma configuration & schema
+│   ├── schema.prisma                  # Database schema (User, Announcement, RefreshToken)
+│   ├── client.js                      # Prisma Client singleton
+│   └── migrations/                    # Generated migration history
+├── generated/                         # Generated Prisma Client (gitignored)
+├── uploads/                           # Local temp uploads (gitignored)
+├── src/
+│   ├── constants/                     # Shared constants (e.g. time helpers)
+│   ├── controllers/                   # Request handlers (business logic)
+│   │   ├── auth.js                    # register, login, refresh, logout, profile
+│   │   └── announcements.controllers.js# CRUD for announcements
+│   ├── middleware/                    # Express middleware
+│   │   ├── authenticate.js            # JWT verification
+│   │   └── upload.middleware.js       # Multer + Cloudinary upload helper
+│   ├── routes/                        # Route definitions + Swagger JSDoc
+│   │   ├── auth.js                    # /api/auth/*
+│   │   └── announcements.routes.js    # /api/announcements/*
+│   ├── services/                      # Cross-cutting services
+│   │   ├── auth.js                    # Token creation, cookie helpers
+│   │   ├── limiter.js                 # Rate limiters (general + strict)
+│   │   └── logger.js                  # Pino logger instance
+│   └── validators/                    # Celebrate / Joi request schemas
+│       ├── auth.js
+│       └── announcements.validators.js
+├── app.js                             # Application entry point
+├── .env.example                       # Environment variable template
+├── .gitignore
+├── package.json
+├── tsconfig.json                      # TypeScript config (for editor typing)
+└── README.md
 ```
 
-### Директорії та їх призначення
+### Folder responsibilities
 
-#### `prisma/`
+- **`src/controllers/`** — Implement the actual logic for each request: talk to the database, call services, return JSON responses or throw typed HTTP errors.
+- **`src/routes/`** — Define URL paths, attach middleware (auth, upload, validation), and host the Swagger JSDoc comments that produce the OpenAPI spec.
+- **`src/validators/`** — Joi schemas wrapped with `celebrate` for `body`, `params`, and `query` validation.
+- **`src/middleware/`** — Reusable Express middleware: JWT authentication and the Multer/Cloudinary upload pipeline.
+- **`src/services/`** — Stateless helpers shared across the app: token utilities, rate limiters, and the logger.
 
-- `schema.prisma` - визначення моделі бази даних
-- `client.js` - експорт Prisma Client для використання в проекті
+## API Endpoints
 
-#### `src/controllers/`
+All endpoints return JSON. Protected endpoints require a `Authorization: Bearer <accessToken>` header.
 
-Контролери містять логіку обробки запитів та взаємодії з базою даних.
+### Auth (`/api/auth`)
 
-```javascript
-// src/controllers/tagController.js
-export const getTags = async (req, res) => {
-  const tags = await prisma.tag.findMany()
-  res.json(tags)
-}
+| Method | Path                 | Auth | Description                                    |
+| ------ | -------------------- | ---- | ---------------------------------------------- |
+| POST   | `/api/auth/register` | No   | Create a new user, return access + refresh     |
+| POST   | `/api/auth/login`    | No   | Authenticate, return access + refresh          |
+| POST   | `/api/auth/refresh`  | No   | Exchange a refresh token for a new pair        |
+| POST   | `/api/auth/logout`   | No   | Invalidate the refresh token, clear cookie     |
+| GET    | `/api/auth/me`       | Yes  | Get the currently authenticated user's profile |
+
+### Announcements (`/api/announcements`)
+
+| Method | Path                     | Auth | Description                                             |
+| ------ | ------------------------ | ---- | ------------------------------------------------------- |
+| GET    | `/api/announcements`     | No   | List announcements (paginated, searchable, sortable)    |
+| GET    | `/api/announcements/:id` | No   | Get a single announcement by ID                         |
+| POST   | `/api/announcements`     | Yes  | Create an announcement (supports image upload)          |
+| PATCH  | `/api/announcements/:id` | Yes  | Update an announcement (owner only, supports new image) |
+| DELETE | `/api/announcements/:id` | Yes  | Delete an announcement (owner only)                     |
+
+## Authentication
+
+The API uses a **two-token** strategy:
+
+- **Access token** (JWT, short-lived) — sent as `Authorization: Bearer <token>` on every protected request.
+- **Refresh token** (JWT, long-lived) — stored in the database and either:
+  - sent in the request body (`{ "refreshToken": "..." }`), or
+  - automatically read from the `refreshToken` httpOnly cookie set on register / login.
+
+### Example flow
+
+```bash
+# 1. Register
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"john_doe","email":"john@example.com","password":"mypassword123","name":"John Doe"}'
+
+# 2. Use the returned accessToken on a protected route
+curl http://localhost:3000/api/auth/me \
+  -H "Authorization: Bearer <accessToken>"
+
+# 3. Refresh when the access token expires
+curl -X POST http://localhost:3000/api/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"<refreshToken>"}'
 ```
 
-#### `src/routes/`
+> Refresh tokens are **rotated**: each successful refresh invalidates the old token and issues a new pair.
 
-Маршрути визначають ендпоінти API та прив'язують їх до контролерів.
+## Image Upload
 
-```javascript
-// src/routes/tagRoutes.js
-import express from 'express'
-import { getTags, createTag } from '../controllers/tagController.js'
+Image uploads use **Multer** (in-memory) and are streamed to **Cloudinary**.
 
-const router = express.Router()
+- Endpoint: `POST /api/announcements` or `PATCH /api/announcements/:id`
+- Content-Type: `multipart/form-data`
+- Field name: `image`
+- Accepted types: `image/jpeg`, `image/png`, `image/webp`
+- Max size: 5 MB
+- The returned `imageUrl` is the secure Cloudinary URL
 
-router.get('/', getTags)
-router.post('/', createTag)
+### Example
 
-export default router
+```bash
+curl -X POST http://localhost:3000/api/announcements \
+  -H "Authorization: Bearer <accessToken>" \
+  -F "title=Selling ASUS laptop" \
+  -F "description=Excellent condition, 16GB RAM" \
+  -F "price=18000" \
+  -F "category=sale" \
+  -F "contactInfo=0991234567" \
+  -F "image=@./laptop.jpg"
 ```
 
-Підключення маршрутів до Express (в `app.js`):
+## Request Validation
 
-```javascript
-import tagRoutes from './src/routes/tagRoutes.js'
+All incoming requests are validated with **Celebrate / Joi** schemas defined in `src/validators/`. A failed validation produces a structured `400 Bad Request` response listing the offending field(s).
 
-app.use('/api/tags', tagRoutes)
-```
+## Error Handling
 
-#### `src/validators/`
+A single error-handling middleware at the bottom of `app.js` normalizes every error into a consistent JSON shape.
 
-Валідатори використовують Joi для перевірки вхідних даних.
+| Error type                  | HTTP status | Description                               |
+| --------------------------- | ----------- | ----------------------------------------- |
+| `entity.parse.failed`       | 400         | Malformed JSON in the request body        |
+| Celebrate validation error  | 400         | Body / params / query failed validation   |
+| Prisma `P2003`              | 400         | Foreign-key constraint violation          |
+| Prisma `P2025`              | 404         | Record not found                          |
+| Prisma `P2002`              | 409         | Unique constraint violation               |
+| Any other `4xx` `HttpError` | as thrown   | Explicit error from controller/middleware |
+| Unhandled error             | 500         | Internal server error                     |
 
-```javascript
-// src/validators/tagValidator.js
-import Joi from 'celebrate/lib/joi'
-
-export const createTagSchema = {
-  body: Joi.object().keys({
-    name: Joi.string().required().min(1).max(50),
-  }),
-}
-
-// Використання в маршрутах
-import { celebrate } from 'celebrate'
-import { createTagSchema } from '../validators/tagValidator.js'
-
-router.post('/', celebrate(createTagSchema), createTag)
-```
-
-## Документація API
-
-Проект автоматично генерує документацію API за допомогою Swagger.
-
-**Доступ до документації:**
-
-- URL: <http://localhost:3000/api-docs>
-- Формат: OpenAPI 3.0.0
-
-Swagger UI надає інтерактивний інтерфейс для:
-
-- Перегляду всіх доступних ендпоінтів
-- Перевірки параметрів запитів
-- Відправки тестових запитів безпосередньо з браузера
-
-### Додавання документації до ендпоінтів
-
-Додайте коментарі JSDoc до вашого коду для автоматичної генерації документації:
-
-```javascript
-/**
- * @swagger
- * /tags:
- *   get:
- *     summary: Отримати список тегів
- *     responses:
- *       200:
- *         description: Список тегів
- */
-router.get('/', getTags)
-```
-
-## Обробка помилок
-
-Boilerplate включає централізовану систему обробки помилок.
-
-### Типи помилок
-
-1. **JSON parsing errors** (код 400) - Неправильний формат JSON у тілі запиту
-2. **Prisma P2025** (код 404) - Ресурс не знайдено
-3. **Prisma P2002** (код 409) - Порушення унікального обмеження
-4. **Prisma P2003** (код 400) - Порушення зовнішнього ключа
-5. **Validation errors** (код 400) - Помилки валідації від Celebrate
-6. **General errors** (код 500) - Внутрішня помилка сервера
-
-### Формат відповіді з помилкою
+### Sample validation error response
 
 ```json
 {
@@ -265,135 +325,146 @@ Boilerplate включає централізовану систему обро�
   "validation": {
     "body": {
       "source": "body",
-      "keys": ["name"],
-      "message": "\"name\" must be a string"
+      "keys": ["title"],
+      "message": "\"title\" must be a string"
     }
   }
 }
 ```
 
-## Приклади використання
+## API Documentation
 
-### Створення нового контролера
+Interactive Swagger UI is auto-generated from JSDoc comments in the route files.
 
-1. Створіть файл `src/controllers/tagController.js`:
+- **URL:** <http://localhost:3000/api-docs>
+- **Format:** OpenAPI 3.0.0
+- **Auth:** Click the **Authorize** button and paste a JWT access token to try protected endpoints.
+
+You can extend the docs by adding JSDoc blocks above your routes, e.g.:
 
 ```javascript
-import { PrismaClient } from '../../prisma/client.js'
-const prisma = new PrismaClient()
+/**
+ * @swagger
+ * /api/announcements:
+ *   get:
+ *     summary: List announcements
+ *     tags: [Announcements]
+ *     responses:
+ *       200:
+ *         description: List of announcements
+ */
+router.get("/", getAllAnnouncements);
+```
 
-export const getAllTags = async (req, res) => {
-  try {
-    const tags = await prisma.tag.findMany()
-    res.json(tags)
-  } catch (error) {
-    res.status(500).json({ error: 'Помилка отримання тегів' })
-  }
-}
+## Rate Limiting
 
-export const getTagById = async (req, res) => {
-  try {
-    const { id } = req.params
-    const tag = await prisma.tag.findUnique({
-      where: { id: parseInt(id) }
-    })
-    
-    if (!tag) {
-      return res.status(404).json({ error: 'Тег не знайдено' })
+Two limiters are configured in `src/services/limiter.js`:
+
+| Limiter         | Window     | Limit | Applied to                         |
+| --------------- | ---------- | ----- | ---------------------------------- |
+| `limiter`       | 15 minutes | 100   | All routes                         |
+| `strictLimiter` | 15 minutes | 10    | `/api/auth/*` (login, register, …) |
+
+When a limit is exceeded the API responds with `429 Too Many Requests`.
+
+## Usage Examples
+
+### Create an announcement
+
+```bash
+curl -X POST http://localhost:3000/api/announcements \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Selling ASUS laptop",
+    "description": "Excellent condition, 16GB RAM, original charger",
+    "price": 18000,
+    "category": "sale",
+    "contactInfo": "0991234567"
+  }'
+```
+
+### List announcements (paginated, searchable, sortable)
+
+```bash
+# Page 1, 10 per page, search "laptop", newest first
+curl "http://localhost:3000/api/announcements?page=1&search=laptop&sort=newest"
+```
+
+Sample response:
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "Selling ASUS laptop",
+      "description": "Excellent condition, 16GB RAM",
+      "price": 18000,
+      "category": "sale",
+      "contactInfo": "0991234567",
+      "imageUrl": "https://res.cloudinary.com/.../laptop.jpg",
+      "createdAt": "2026-02-10T12:00:00.000Z",
+      "updatedAt": "2026-02-10T12:00:00.000Z",
+      "userId": 1,
+      "user": {
+        "id": 1,
+        "username": "john_doe",
+        "email": "john@example.com",
+        "name": "John Doe"
+      }
     }
-    
-    res.json(tag)
-  } catch (error) {
-    res.status(500).json({ error: 'Помилка отримання тега' })
+  ],
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "totalPages": 1,
+    "perPage": 10
   }
 }
 ```
 
-1. Створіть файл `src/validators/tagValidator.js`:
-
-```javascript
-import Joi from 'celebrate/lib/joi'
-
-export const getTagByIdSchema = {
-  params: Joi.object().keys({
-    id: Joi.number().integer().required(),
-  }),
-}
-```
-
-1. Створіть файл `src/routes/tagRoutes.js`:
-
-```javascript
-import express from 'express'
-import { celebrate } from 'celebrate'
-import { getAllTags, getTagById } from '../controllers/tagController.js'
-import { getTagByIdSchema } from '../validators/tagValidator.js'
-
-const router = express.Router()
-
-router.get('/', getAllTags)
-router.get('/:id', celebrate(getTagByIdSchema), getTagById)
-
-export default router
-```
-
-1. Підключіть маршрути в `app.js`:
-
-```javascript
-import tagRoutes from './src/routes/tagRoutes.js'
-
-app.use('/api/tags', tagRoutes)
-```
-
-1. Додайте модель в `prisma/schema.prisma`:
-
-```prisma
-model Tag {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-```
-
-1. Створіть та застосуйте міграцію:
+### Update an announcement (owner only)
 
 ```bash
-npm run prisma:migrate
-npm run prisma:generate
+curl -X PATCH http://localhost:3000/api/announcements/1 \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "Content-Type: application/json" \
+  -d '{"price": 17000}'
 ```
 
-### Відправка запиту
-
-Приклад запиту за допомогою curl:
+### Delete an announcement (owner only)
 
 ```bash
-# Отримати всі теги
-curl http://localhost:3000/api/tags
-
-# Отримати тег за ID
-curl http://localhost:3000/api/tags/1
+curl -X DELETE http://localhost:3000/api/announcements/1 \
+  -H "Authorization: Bearer <accessToken>"
 ```
 
-## Корисні поради
+## Useful Tips
 
-1. **Використовуйте `npm run dev`** під час розробки для автоматичного перезапуску сервера
-2. **Перевіряйте документацию** на `/api-docs` для тестування API без написання коду
-3. **Створюйте валідатори** для всіх вхідних даних для забезпечення безпеки
-4. **Дотримуйтесь структури проекту** для підтримки чистого коду
-5. **Коментуйте зміни** у `schema.prisma` перед створенням міграції
+1. **Use `npm run dev`** during development for automatic server reload on file changes.
+2. **Explore the API visually** at `/api-docs` — you can authenticate once and try every endpoint from the browser.
+3. **Always create validators** for new endpoints; never trust user input.
+4. **Stick to the folder structure** (`controllers` / `routes` / `validators` / `middleware` / `services`) to keep the code maintainable.
+5. **Rotate the JWT secret** between environments and never commit it to version control.
+6. **Use Cloudinary signed uploads** in production to avoid exposing API secrets to the client.
 
-## Ресурси для навчання
+## Learning Resources
 
-- [Документація Express.js](https://expressjs.com/)
-- [Документація Prisma](https://www.prisma.io/docs)
-- [Документація Joi (валідація)](https://joi.dev/api/)
-- [Документація OpenAPI/Swagger](https://swagger.io/specification/)
+- [Express.js documentation](https://expressjs.com/)
+- [Prisma documentation](https://www.prisma.io/docs)
+- [Joi validation](https://joi.dev/api/)
+- [OpenAPI / Swagger specification](https://swagger.io/specification/)
+- [JWT introduction (jwt.io)](https://jwt.io/introduction)
+- [bcrypt usage guide](https://github.com/kelektiv/node.bcrypt.js#readme)
+- [Helmet documentation](https://helmetjs.github.io/)
+- [Cloudinary Node.js SDK](https://cloudinary.com/documentation/node_integration)
+- [Pino logger](https://getpino.io/)
 
-## Ліцензія
+## License
 
 ISC
 
-## Контакти
+## Contact
 
-Для питань та підтримки звертайтеся до викладача та ментора курсу.
+For questions and support, reach out to the course instructor or mentor.
